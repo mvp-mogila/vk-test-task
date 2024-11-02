@@ -57,6 +57,7 @@ func (wp *WorkerPool) AddWorker() {
 }
 
 func (wp *WorkerPool) RemoveWorker() {
+	//TODO: check count > 0
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
