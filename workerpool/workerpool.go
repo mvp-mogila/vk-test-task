@@ -79,15 +79,14 @@ func (wp *WorkerPool) work(w *Worker) {
 	defer wp.wg.Done()
 	for {
 		select {
+		case <-w.cancelCh:
+			return
 		case task, ok := <-wp.taskCh:
 			if !ok {
 				fmt.Printf("Worker %d stopped\n", w.id)
 				return
 			}
-			fmt.Printf("Worker %d processing string %s\n", w.id, task)
-		case <-w.cancelCh:
-			fmt.Printf("Worker %d stopped\n", w.id)
-			return
+			fmt.Printf("Worker %d processing string \"%s\"\n", w.id, task)
 		}
 	}
 }

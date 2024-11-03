@@ -2,34 +2,45 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"sync"
 
 	"github.com/mvp-mogila/vk-test-task/workerpool"
 )
 
 func main() {
-	wp := workerpool.NewWorkerPool(2)
-	wp.RemoveWorker()
-	wp.RemoveWorker()
-	fmt.Println(wp.RemoveWorker())
+	wp := workerpool.NewWorkerPool(1)
+	wp.RemoveWorker()              // id: 1
+	fmt.Println(wp.RemoveWorker()) // error
 
-	wp.AddWorker()
+	fmt.Println(wp.AddTask("test")) // error
 
-	strings := []string{"123", "abc", "cde", "fhurekf", "fherujkferf", "fjhureofref", "hjfuerofer",
-		"123", "abc", "cde", "fhurekf", "gtr", "fjhureofref", "hjfuerofer",
-		"45", "i", "cde", "op", "fherujkferf", "fjhureofref", "hjfuerofer",
-		"65", "abc", "lio", "fhurekf", "grt", "grt", "hjfuerofer"}
+	wp.AddWorker() // id: 2
+	wp.AddWorker() // id: 3
+	wp.AddWorker() // id: 4
 
+	strings := []string{"123", "abc", "cde", "fhurekf", "fherujkferf", "fjhurevfvv.ofref", "hjfuerofer",
+		"12343", "abzzc", "cxde", "fzchurekf", "gtr", "fjhureofref", "5",
+		"45", "i", "cdcccce", "op", "fherujkferf", "fjhur453eofref", "hjfuerofer",
+		"65", "abc", "lio", "fhuvfrekf", "grt", "grtf54", "hjfuerozxczfer"}
+
+	wg := sync.WaitGroup{}
 	for i, s := range strings {
-		wp.AddTask(s)
-		if i == 2 {
-			wp.RemoveWorker()
-		} else if i == 12 {
-			wp.AddWorker()
+		if i == 4 {
+			wp.AddWorker() // id: 5
+		} else if i == 9 {
+			wp.RemoveWorker() // id: 5
 		}
-		// wp.AddWorker()
+
+		wg.Add(1)
+		go func() {
+			wp.AddTask(s)
+			wg.Done()
+		}()
 	}
 
-	time.Sleep(2 * time.Second)
+	wg.Wait()
+
+	wp.RemoveWorker() // id: 4
+
 	wp.Stop()
 }
