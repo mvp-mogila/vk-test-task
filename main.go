@@ -21,7 +21,8 @@ func main() {
 	strings := []string{"123", "abc", "cde", "fhurekf", "fherujkferf", "fjhurevfvv.ofref", "hjfuerofer",
 		"12343", "abzzc", "cxde", "fzchurekf", "gtr", "fjhureofref", "5",
 		"45", "i", "cdcccce", "op", "fherujkferf", "fjhur453eofref", "hjfuerofer",
-		"65", "abc", "lio", "fhuvfrekf", "grt", "grtf54", "hjfuerozxczfer"}
+		"65", "abc", "lio", "fhuvfrekf", "grt", "grtf54", "hjfuerozxczfer",
+		"12ghyth343", "ab546456zzc", "cxdhyte", "fzchunnnnnrekf", "gn)(*(*tr", "fjhur!!!!!!!!eofref", ""}
 
 	wg := sync.WaitGroup{}
 	for i, s := range strings {
@@ -38,9 +39,9 @@ func main() {
 		}()
 	}
 
-	wg.Wait()
-
 	wp.RemoveWorker() // id: 4
+
+	wg.Wait()
 
 	wp.Stop()
 }
