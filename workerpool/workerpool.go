@@ -1,15 +1,20 @@
 package workerpool
 
 import (
+	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
+
+	"github.com/mvp-mogila/vk-test-task/stack"
 )
+
+var ErrNoWorkers = errors.New("worker pool is empty")
 
 type WorkerPool struct {
 	wg      *sync.WaitGroup
-	mu      *sync.Mutex
-	lastId  int
-	workers []*Worker
+	lastId  atomic.Int64
+	workers *stack.Stack[*Worker]
 	taskCh  chan string
 }
 
@@ -21,8 +26,7 @@ type Worker struct {
 func NewWorkerPool(numWorkers int) *WorkerPool {
 	wp := WorkerPool{
 		wg:      &sync.WaitGroup{},
-		mu:      &sync.Mutex{},
-		workers: make([]*Worker, 0, numWorkers),
+		workers: stack.NewStack[*Worker](),
 		taskCh:  make(chan string),
 	}
 
@@ -33,43 +37,45 @@ func NewWorkerPool(numWorkers int) *WorkerPool {
 	return &wp
 }
 
-func (wp *WorkerPool) AddTask(task string) {
-	wp.taskCh <- task
+func (wp *WorkerPool) AddTask(task string) error {
+	if wp.workers.Size() != 0 {
+		wp.taskCh <- task
+		return nil
+	}
+	return ErrNoWorkers
 }
 
 func (wp *WorkerPool) AddWorker() {
-	wp.mu.Lock()
-	defer wp.mu.Unlock()
-
-	wp.lastId++
+	wp.lastId.Add(1)
 	worker := &Worker{
-		id:       wp.lastId,
+		id:       int(wp.lastId.Load()),
 		cancelCh: make(chan struct{}),
 	}
 
-	//TODO: use allocated memory after removing worker
-	wp.workers = append(wp.workers, worker)
+	wp.workers.Push(worker)
 	fmt.Printf("New worker %d added\n", worker.id)
 
 	wp.wg.Add(1)
-	go wp.worker(worker)
+	go wp.work(worker)
 	fmt.Printf("Worker %d started\n", worker.id)
 }
 
-func (wp *WorkerPool) RemoveWorker() {
-	//TODO: check count > 0
-	wp.mu.Lock()
-	defer wp.mu.Unlock()
+func (wp *WorkerPool) RemoveWorker() error {
+	worker, err := wp.workers.Pop()
+	if err != nil {
+		if errors.Is(err, stack.ErrEmptyStack) {
+			return ErrNoWorkers
+		} else {
+			panic(err)
+		}
+	}
 
-	worker := wp.workers[wp.lastId-1]
-	worker.cancelCh <- struct{}{}
-	wp.workers = wp.workers[:wp.lastId-1]
-	//wp.numWorkers--
-
+	close(worker.cancelCh)
 	fmt.Printf("Worker %d removed\n", worker.id)
+	return nil
 }
 
-func (wp *WorkerPool) worker(w *Worker) {
+func (wp *WorkerPool) work(w *Worker) {
 	defer wp.wg.Done()
 	for {
 		select {

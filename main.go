@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/mvp-mogila/vk-test-task/workerpool"
@@ -8,6 +9,11 @@ import (
 
 func main() {
 	wp := workerpool.NewWorkerPool(2)
+	wp.RemoveWorker()
+	wp.RemoveWorker()
+	fmt.Println(wp.RemoveWorker())
+
+	wp.AddWorker()
 
 	strings := []string{"123", "abc", "cde", "fhurekf", "fherujkferf", "fjhureofref", "hjfuerofer",
 		"123", "abc", "cde", "fhurekf", "gtr", "fjhureofref", "hjfuerofer",
@@ -18,10 +24,10 @@ func main() {
 		wp.AddTask(s)
 		if i == 2 {
 			wp.RemoveWorker()
-		} else if i == 4 {
+		} else if i == 12 {
 			wp.AddWorker()
 		}
-		wp.AddWorker()
+		// wp.AddWorker()
 	}
 
 	time.Sleep(2 * time.Second)
