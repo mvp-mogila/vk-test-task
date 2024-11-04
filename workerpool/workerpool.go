@@ -94,4 +94,5 @@ func (wp *WorkerPool) work(w *Worker) {
 func (wp *WorkerPool) Stop() {
 	close(wp.taskCh)
 	wp.wg.Wait()
+	fmt.Println("Worker pool stopped")
 }
